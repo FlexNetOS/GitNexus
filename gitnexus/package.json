@@ -98,6 +98,7 @@
     "tree-sitter-swift": "file:./vendor/tree-sitter-swift"
   },
   "devDependencies": {
+    "gitnexus-shared": "file:../gitnexus-shared",
     "@types/cli-progress": "^3.11.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
