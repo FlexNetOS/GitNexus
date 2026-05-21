@@ -96,6 +96,10 @@
     "tree-sitter-kotlin": "^0.3.8",
     "tree-sitter-proto": "file:./vendor/tree-sitter-proto",
     "tree-sitter-swift": "file:./vendor/tree-sitter-swift"
+
+  },
+  "optionalDependencies": {
+    "tree-sitter-swift": "^0.6.0"
   },
   "devDependencies": {
     "gitnexus-shared": "file:../gitnexus-shared",

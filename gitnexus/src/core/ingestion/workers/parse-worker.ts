@@ -24,6 +24,7 @@ import { parseSourceSafe } from '../../tree-sitter/safe-parse.js';
 import type { SymbolTableReader } from '../model/symbol-table.js';
 import type { ExtractedHeritage } from '../model/heritage-map.js';
 
+
 /** Language grammar type accepted by Parser.setLanguage(). */
 type TreeSitterLanguage = Parameters<typeof Parser.prototype.setLanguage>[0];
 
@@ -340,6 +341,7 @@ const isLanguageAvailable = (language: SupportedLanguages, filePath: string): bo
       ? `${language}:tsx`
       : language;
   return key in languageMap && languageMap[key] != null;
+
 };
 
 const setLanguage = (language: SupportedLanguages, filePath: string): void => {
