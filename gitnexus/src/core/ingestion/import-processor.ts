@@ -1,5 +1,6 @@
 import { KnowledgeGraph } from '../graph/types.js';
 import { ASTCache } from './ast-cache.js';
+import { SymbolTable } from './symbol-table.js';
 import Parser from 'tree-sitter';
 import { isLanguageAvailable, loadParser, loadLanguage } from '../tree-sitter/parser-loader.js';
 import { getProvider, getProviderForFile, providersWithImplicitWiring } from './languages/index.js';
@@ -244,6 +245,7 @@ export const processImports = async (
   onProgress?: (current: number, total: number) => void,
   repoRoot?: string,
   allPaths?: string[],
+  symbolTable?: SymbolTable,
 ) => {
   const importMap = ctx.importMap;
   const packageMap = ctx.packageMap;
@@ -278,6 +280,57 @@ export const processImports = async (
     graph,
     importMap,
   );
+
+  // Helper: add symbol-level IMPORTS edges for named imports
+  const addSymbolImportEdges = (filePath: string, resolvedPath: string, symbolNames?: string[]) => {
+    if (!symbolNames || !symbolTable) return;
+    const sourceId = generateId('File', filePath);
+    for (const name of symbolNames) {
+      const targetNodeId = symbolTable.lookupExact(resolvedPath, name);
+      if (!targetNodeId) continue;
+      const relId = generateId('IMPORTS', `${filePath}:${name}->${resolvedPath}`);
+      graph.addRelationship({
+        id: relId,
+        sourceId,
+        targetId: targetNodeId,
+        type: 'IMPORTS',
+        confidence: 1.0,
+        reason: '',
+      });
+    }
+  };
+
+  // Helper: extract imported symbol names from AST node (for sequential path)
+  const extractSymbolNames = (importNode: any, language: string): string[] => {
+    const names: string[] = [];
+    if (language === SupportedLanguages.Python) {
+      for (const child of importNode.namedChildren) {
+        if (child.type === 'module_name') continue;
+        if (child.type === 'wildcard_import') continue;
+        if (child.type === 'dotted_name' || child.type === 'identifier') {
+          names.push(child.text);
+        } else if (child.type === 'aliased_import') {
+          const nameNode = child.childForFieldName?.('name') || child.namedChildren?.[0];
+          if (nameNode) names.push(nameNode.text);
+        }
+      }
+      return names;
+    }
+    if (language === SupportedLanguages.TypeScript || language === SupportedLanguages.JavaScript) {
+      const importClause = importNode.namedChildren?.find((c: any) => c.type === 'import_clause');
+      const namedImports = importClause?.namedChildren?.find((c: any) => c.type === 'named_imports');
+      if (namedImports) {
+        for (const spec of namedImports.namedChildren) {
+          if (spec.type === 'import_specifier') {
+            const nameNode = spec.childForFieldName?.('name');
+            if (nameNode) names.push(nameNode.text);
+          }
+        }
+      }
+      return names;
+    }
+    return names;
+  };
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -431,6 +484,7 @@ export const processImportsFromExtracted = async (
   onProgress?: (current: number, total: number) => void,
   repoRoot?: string,
   prebuiltCtx?: ImportResolutionContext,
+  symbolTable?: SymbolTable,
 ) => {
   const importMap = ctx.importMap;
   const packageMap = ctx.packageMap;
@@ -454,6 +508,25 @@ export const processImportsFromExtracted = async (
     graph,
     importMap,
   );
+
+  // Helper: add symbol-level IMPORTS edges for named imports
+  const addSymbolImportEdges = (filePath: string, resolvedPath: string, symbolNames?: string[]) => {
+    if (!symbolNames || !symbolTable) return;
+    const sourceId = generateId('File', filePath);
+    for (const name of symbolNames) {
+      const targetNodeId = symbolTable.lookupExact(resolvedPath, name);
+      if (!targetNodeId) continue;
+      const relId = generateId('IMPORTS', `${filePath}:${name}->${resolvedPath}`);
+      graph.addRelationship({
+        id: relId,
+        sourceId,
+        targetId: targetNodeId,
+        type: 'IMPORTS',
+        confidence: 1.0,
+        reason: '',
+      });
+    }
+  };
 
   // Group by file for progress reporting (users see file count, not import count)
   const importsByFile = new Map<string, ExtractedImport[]>();
