@@ -107,6 +107,19 @@ export interface GLMConfig extends BaseProviderConfig {
 }
 
 /**
+ * DeepSeek configuration
+ * Supports both deepseek-chat and deepseek-reasoner (thinking mode).
+ * When using deepseek-reasoner, reasoning_content is automatically
+ * preserved across tool call turns via a fetch-layer interceptor.
+ */
+export interface DeepSeekConfig extends BaseProviderConfig {
+  provider: 'deepseek';
+  apiKey: string;
+  model: string;  // e.g., 'deepseek-chat', 'deepseek-reasoner'
+  baseUrl?: string;  // defaults to https://api.deepseek.com/v1
+}
+
+/**
  * Union type for all provider configurations
  */
 export type ProviderConfig =
@@ -195,6 +208,12 @@ export const DEFAULT_LLM_SETTINGS: LLMSettings = {
     apiKey: '',
     model: 'GLM-5',
     baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+    temperature: 0.1,
+  },
+  deepseek: {
+    apiKey: '',
+    model: 'deepseek-chat',
+    baseUrl: 'https://api.deepseek.com/v1',
     temperature: 0.1,
   },
 };
