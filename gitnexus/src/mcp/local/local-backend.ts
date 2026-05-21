@@ -31,6 +31,7 @@ import { realpathSync } from 'fs';
 import {
   listRegisteredRepos,
   cleanupOldKuzuFiles,
+  loadMeta,
   type RegistryEntry,
 } from '../../storage/repo-manager.js';
 import { GroupService, type GroupToolPort } from '../../core/group/service.js';
@@ -217,6 +218,7 @@ interface RepoHandle {
   lastCommit: string;
   remoteUrl?: string;
   stats?: RegistryEntry['stats'];
+  loadedAt?: string;   // meta.indexedAt when DB was opened — for staleness detection
 }
 
 /** Resolve symlinks for path comparison; falls back to path.resolve on error.
@@ -530,6 +532,7 @@ export class LocalBackend {
     const pending = this.reinitPromises.get(repoId);
     if (pending) return pending;
 
+
     const handle = this.repos.get(repoId);
     if (!handle) throw new Error(`Unknown repo: ${repoId}`);
 
@@ -574,6 +577,10 @@ export class LocalBackend {
     try {
       await initLbug(repoId, handle.lbugPath);
       this.initializedRepos.add(repoId);
+
+      // Record when we loaded so we can detect staleness later
+      const meta = await loadMeta(handle.storagePath);
+      handle.loadedAt = meta?.indexedAt;
     } catch (err: any) {
       // If lock error, mark as not initialized so next call retries
       this.initializedRepos.delete(repoId);

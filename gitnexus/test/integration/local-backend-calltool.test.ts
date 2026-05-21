@@ -18,6 +18,7 @@ vi.mock('../../src/storage/repo-manager.js', () => ({
   listRegisteredRepos: vi.fn().mockResolvedValue([]),
   cleanupOldKuzuFiles: vi.fn().mockResolvedValue({ found: false, needsReindex: false }),
   findSiblingClones: vi.fn().mockResolvedValue([]),
+  loadMeta: vi.fn().mockResolvedValue(null),
 }));
 
 // ─── Block 2: callTool dispatch tests ────────────────────────────────

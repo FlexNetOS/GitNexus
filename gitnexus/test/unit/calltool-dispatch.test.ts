@@ -41,6 +41,7 @@ vi.mock('../../src/storage/repo-manager.js', () => ({
   listRegisteredRepos: vi.fn().mockResolvedValue([]),
   cleanupOldKuzuFiles: vi.fn().mockResolvedValue({ found: false, needsReindex: false }),
   findSiblingClones: vi.fn().mockResolvedValue([]),
+  loadMeta: vi.fn().mockResolvedValue(null),
 }));
 
 // `core/git-staleness` is also imported by `local-backend.ts` (for
