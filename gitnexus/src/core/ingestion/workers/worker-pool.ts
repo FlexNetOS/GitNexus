@@ -1130,6 +1130,69 @@ export const createWorkerPool = (
         reportProgress();
       };
 
+      /**
+       * Mirror of {@link requeueAfterTimeout} for the worker-exit path:
+       * binary-search the offending file via job splitting, then skip
+       * the isolated single item. See GitNexus#1665.
+       */
+      const requeueAfterCrash = (
+        workerIndex: number,
+        job: WorkerJob<TInput>,
+        exitCode: number,
+      ): void => {
+        if (job.items.length > 1) {
+          const midpoint = Math.ceil(job.items.length / 2);
+          const firstItems = job.items.slice(0, midpoint);
+          const secondItems = job.items.slice(midpoint);
+          const first: WorkerJob<TInput> = {
+            startIndex: job.startIndex,
+            items: firstItems,
+            estimatedBytes: firstItems.reduce((sum, item) => sum + estimateItemBytes(item), 0),
+            attempt: job.attempt,
+            splitDepth: job.splitDepth + 1,
+            timeoutMs: job.timeoutMs,
+          };
+          const second: WorkerJob<TInput> = {
+            startIndex: job.startIndex + midpoint,
+            items: secondItems,
+            estimatedBytes: secondItems.reduce((sum, item) => sum + estimateItemBytes(item), 0),
+            attempt: job.attempt,
+            splitDepth: job.splitDepth + 1,
+            timeoutMs: job.timeoutMs,
+          };
+          logger.warn(
+            {
+              workerIndex,
+              exitCode,
+              items: job.items.length,
+              estimatedBytes: job.estimatedBytes,
+              firstSplitItems: first.items.length,
+              secondSplitItems: second.items.length,
+            },
+            `Worker ${workerIndex} exited with code ${exitCode}. Splitting into ${first.items.length}/${second.items.length} item jobs to isolate the offending file (likely native parser crash — see GitNexus#1665).`,
+          );
+          jobs.unshift(first, second);
+          return;
+        }
+
+        const item = job.items[0];
+        const offendingPath = itemPath(item) ?? '<unknown>';
+        logger.warn(
+          {
+            workerIndex,
+            exitCode,
+            path: offendingPath,
+            bytes: job.estimatedBytes,
+          },
+          `Worker ${workerIndex} crashed on a single file (${offendingPath}). Skipping and continuing.`,
+        );
+        if (onItemCrash) {
+          onItemCrash(item, new Error(`exit ${exitCode} parsing ${offendingPath}`));
+        }
+        completedFiles += 1;
+        reportProgress();
+      };
+
       const runWorker = (workerIndex: number) => {
         if (stopped) return;
         if (!activeSlots.has(workerIndex)) return;
