@@ -402,6 +402,7 @@ const findEnclosingFunction = (
       const funcName = efnResult?.funcName ?? genericFuncName(current);
       const label = efnResult?.label ?? inferFunctionLabel(current.type);
 
+
       if (funcName) {
         const resolved = ctx.resolve(funcName, filePath);
         if (resolved?.tier === 'same-file' && resolved.candidates.length > 0) {
@@ -2762,6 +2763,7 @@ const makeAccessEmitter = (graph: KnowledgeGraph, sourceId: string): OnFieldReso
     const key = `${sourceId}\0${fieldNodeId}`;
     if (emitted.has(key)) return;
     emitted.add(key);
+
 
     graph.addRelationship({
       id: generateId('ACCESSES', `${sourceId}:${fieldNodeId}:read`),

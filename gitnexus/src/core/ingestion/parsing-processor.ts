@@ -83,6 +83,7 @@ export interface WorkerExtractedData {
   parsedFiles: ParsedFile[];
 }
 
+
 // ============================================================================
 // Worker-based parallel parsing
 // ============================================================================
@@ -461,6 +462,7 @@ const processParsingSequential = async (
       tree = parseSourceSafe(parser, parseContent, undefined, {
         bufferSize: getTreeSitterBufferSize(parseContent),
       });
+
     } catch (parseError) {
       logger.warn(`Skipping unparseable file: ${file.path}`);
       continue;

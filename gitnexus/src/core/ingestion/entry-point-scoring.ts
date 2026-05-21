@@ -37,6 +37,7 @@ const UNIVERSAL_ENTRY_POINT_PATTERNS: RegExp[] = [
   /^emit[A-Z]/, // emitEvent
 ];
 
+
 /** Pre-computed merged patterns (universal + language-specific) from providers. */
 const MERGED_ENTRY_POINT_PATTERNS = Object.fromEntries(
   Object.entries(providers).map(([lang, provider]) => [

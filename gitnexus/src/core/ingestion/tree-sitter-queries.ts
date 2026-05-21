@@ -701,8 +701,22 @@ export const CPP_QUERIES = `
 (preproc_def name: (identifier) @name) @definition.macro
 
 ; Functions & Methods (direct declarator)
+
 (function_definition declarator: (function_declarator declarator: (identifier) @name)) @definition.function
 (function_definition declarator: (function_declarator declarator: (qualified_identifier name: (identifier) @name))) @definition.method
+; Function declarations / prototypes (common in headers)
+(declaration declarator: (function_declarator declarator: (identifier) @name)) @definition.function
+
+; Inline class method declarations (inside class body, no body: void Foo();)
+(field_declaration declarator: (function_declarator declarator: (identifier) @name)) @definition.method
+
+; Inline class method definitions (inside class body, with body: void Foo() { ... })
+; The function_definition is a direct child of field_declaration_list, not wrapped in field_declaration.
+; Name uses field_identifier (regular methods) or identifier (constructors) or operator_name (operators).
+(field_declaration_list
+  (function_definition
+    declarator: (function_declarator
+      declarator: [(field_identifier) (identifier) (operator_name)] @name))) @definition.method
 
 ; Functions/methods returning pointers (pointer_declarator wraps function_declarator)
 (function_definition declarator: (pointer_declarator declarator: (function_declarator declarator: (identifier) @name))) @definition.function
@@ -882,6 +896,7 @@ export const CSHARP_QUERIES = `
     expression: (_) @assignment.receiver
     name: (identifier) @assignment.property)
   right: (_)) @assignment
+
 `;
 
 // Rust queries - works with tree-sitter-rust

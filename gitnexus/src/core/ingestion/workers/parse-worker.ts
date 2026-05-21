@@ -369,6 +369,7 @@ const clearCaches = (): void => {
   exportCache.clear();
   fieldInfoCache.clear();
   methodInfoCache.clear();
+
 };
 
 // ============================================================================
@@ -390,6 +391,7 @@ function findEnclosingClassNode(node: SyntaxNode): SyntaxNode | null {
       // the owner node and correctly marks methods as static. Name resolution
       // for qualified names is handled separately by findEnclosingClassInfo.
       return current;
+
     }
     current = current.parent;
   }
@@ -407,6 +409,7 @@ function findEnclosingClassNode(node: SyntaxNode): SyntaxNode | null {
 function findClassNodeByQualifiedName(node: SyntaxNode): SyntaxNode | null {
   const declarator = node.childForFieldName('declarator');
   if (!declarator) return null;
+
 
   // Find the function_declarator, recursively unwrapping pointer_declarator /
   // reference_declarator chains (e.g. int** Foo::bar() has
@@ -1435,6 +1438,7 @@ const processFileGroup = (
       logger.warn(
         `Failed to parse file ${file.path}: ${err instanceof Error ? err.message : String(err)}`,
       );
+
       continue;
     }
 
