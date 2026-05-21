@@ -906,6 +906,7 @@ const analyzeCommandImpl = async (inputPath?: string, options?: AnalyzeOptions):
   }
 
   // LadybugDB's native module holds open handles that prevent Node from exiting.
+
   // ONNX Runtime also registers native atexit hooks that segfault on some
   // platforms (#38, #40). Force-exit to ensure clean termination.
   process.exit(0);
