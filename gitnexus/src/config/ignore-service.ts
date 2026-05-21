@@ -332,6 +332,11 @@ export const shouldIgnorePath = (filePath: string): boolean => {
     return true;
   }
 
+  // Check user-defined .gitnexusignore patterns
+  if (userIgnore?.ignores(normalizedPath)) {
+    return true;
+  }
+
   return false;
 };
 

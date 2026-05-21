@@ -260,6 +260,22 @@ const processParsingWithWorkers = async (
     logger.warn(`  Skipped unsupported languages: ${summary}`);
   }
 
+  // Merge and log skipped languages from workers
+  const skippedLanguages = new Map<string, number>();
+  for (const result of chunkResults) {
+    if (result.skippedLanguages) {
+      for (const [lang, count] of Object.entries(result.skippedLanguages)) {
+        skippedLanguages.set(lang, (skippedLanguages.get(lang) || 0) + count);
+      }
+    }
+  }
+  if (skippedLanguages.size > 0) {
+    const summary = Array.from(skippedLanguages.entries())
+      .map(([lang, count]) => `${lang}: ${count}`)
+      .join(', ');
+    console.warn(`  Skipped unsupported languages: ${summary}`);
+  }
+
   // Final progress
   onFileProgress?.(total, total, 'done');
   return merged;
@@ -405,6 +421,12 @@ const processParsingSequential = async (
       if (skippedByLang) {
         skippedByLang.set(language, (skippedByLang.get(language) ?? 0) + 1);
       }
+      continue;
+    }
+
+    // Skip unsupported languages (e.g. Swift when tree-sitter-swift not installed)
+    if (!isLanguageAvailable(language)) {
+      skippedLanguages.set(language, (skippedLanguages.get(language) || 0) + 1);
       continue;
     }
 

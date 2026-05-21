@@ -56,7 +56,7 @@ import {
   formatProcesses,
 } from './prompts.js';
 
-import { shouldIgnorePath } from '../../config/ignore-service.js';
+import { shouldIgnorePath, loadUserIgnore } from '../../config/ignore-service.js';
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -314,6 +314,9 @@ export class WikiGenerator {
     this.onProgress('gather', 5, 'Querying graph for file structure...');
     const filesWithExports = await getFilesWithExports();
     const allFiles = await getAllFiles();
+
+    // Ensure .gitnexusignore is loaded (wiki runs as separate entry point)
+    loadUserIgnore(this.repoPath);
 
     // Filter to source files only
     const sourceFiles = allFiles.filter((f) => !shouldIgnorePath(f));
